@@ -1,3 +1,9 @@
+# Warning
+This module cannot be removed from kernel by command rmmod yet. So please create a virtual machine snapshot before using it.
+## Porting
+porting the module to higher version of Linux kernel, tested on Ubuntu 18.04, Linux kernel 5.0
+
+
 # Sample Rootkit for Linux
 ## About
 This is sample rootkit implementation for Linux. It is able to hide processes, files and grants root privileges. It also have stealth mode (enabled by default) that prevents it from detecting.
